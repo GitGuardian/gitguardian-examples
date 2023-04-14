@@ -1,0 +1,6 @@
+authorization.py
+.ipynb_checkpoints
+__pycache__
+.cache_ggshield
+.DS_Store
+/.DS_Store
