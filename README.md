@@ -4,7 +4,7 @@ This repo is meant to make it easy to find example implementations of GitGuardia
 
 ## Included example projects
 
-[GitGuardian API Remediaion Workflow Notebook
+[GitGuardian API Remediation Workflow Notebook
 ](https://github.com/GitGuardian/gitguardian-examples/tree/main/api-remdeiation-notebook)
 
 If you have questions about this repo, feel free to email `devrel@gitguardian.com`
