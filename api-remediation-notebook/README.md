@@ -1,4 +1,4 @@
-# GitGuardian API Remediaion Workflow Notebook
+# GitGuardian API Remediation Workflow Notebook
 
 ## What
 A [Jupyter Notebook](https://jupyter.org/install) to learn how to use the GitGuardian API and experiment with automation.
