@@ -7,4 +7,7 @@ This repo is meant to make it easy to find example implementations of GitGuardia
 [GitGuardian API Remediation Workflow Notebook
 ](https://github.com/GitGuardian/gitguardian-examples/tree/main/api-remediation-notebook)
 
+[GitGuardian Secret Scanning in an LLM Inference Proxy
+](https://github.com/GitGuardian/gitguardian-examples/tree/main/inference-proxy-secret-scanning)
+
 If you have questions about this repo, feel free to email `devrel@gitguardian.com`
