@@ -19,7 +19,7 @@ from app.sse import build_sse_stream
 from app.upstream import UpstreamError, call_upstream
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("inference_proxy")
+logger = logging.getLogger("ai_gateway")
 
 settings: Settings | None = None
 gg_client: GitGuardianClient | None = None
@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI):
     await http_client.aclose()
 
 
-app = FastAPI(title="Inference Proxy - GitGuardian secret-scanning demo", lifespan=lifespan)
+app = FastAPI(title="AI Gateway - GitGuardian secret-scanning demo", lifespan=lifespan)
 
 
 def _get_settings() -> Settings:

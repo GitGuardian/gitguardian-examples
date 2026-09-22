@@ -1,6 +1,6 @@
-# GitGuardian Secret Scanning in an LLM Inference Proxy
+# GitGuardian Secret Scanning in an AI Gateway
 
-A minimal [FastAPI](https://fastapi.tiangolo.com/) proxy in front of OpenAI, Anthropic, and Mistral that scans every prompt and every completion with GitGuardian and blocks the call (fail-closed) if a secret is found.
+A minimal [FastAPI](https://fastapi.tiangolo.com/) AI gateway in front of OpenAI, Anthropic, and Mistral that scans every prompt and every completion with GitGuardian and blocks the call (fail-closed) if a secret is found.
 
 - Prompts are scanned before being forwarded upstream; completions are scanned before being returned to the caller.
 - Scanning hits GitGuardian's [`/v1/multiscan`](https://api.gitguardian.com/docs#tag/Scan-Methods/operation/multiple_scan) directly over HTTP (`httpx` + `pydantic`, no `pygitguardian` dependency). If `GITGUARDIAN_SOURCE_UUID` is set, a detected secret also creates a real incident via [`/v1/scan/create-incidents`](https://api.gitguardian.com/docs#tag/Scan-Methods/operation/scan_create_incidents).
@@ -22,7 +22,7 @@ Edit `.env`: set `GITGUARDIAN_API_KEY` and whichever provider key(s) you have. `
 uv run --env-file .env uvicorn app.main:app --reload
 ```
 
-`GET /healthz` returns `{"status": "ok"}` once the proxy is up.
+`GET /healthz` returns `{"status": "ok"}` once the gateway is up.
 
 ## Demo
 

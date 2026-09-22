@@ -56,7 +56,7 @@ class GitGuardianClient:
         self._base_url = base_url.rstrip("/")
         self._headers = {
             "Authorization": f"Token {api_key}",
-            "User-Agent": "inference-proxy-demo",
+            "User-Agent": "ai-gateway-demo",
         }
 
     @staticmethod

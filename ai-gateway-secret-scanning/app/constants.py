@@ -1,4 +1,4 @@
-"""Constants shared across the proxy."""
+"""Constants shared across the AI gateway."""
 
 from enum import StrEnum
 
@@ -23,5 +23,5 @@ DEMO_MODEL_OPENAI = f"{Provider.OPENAI}/gpt-4o-mini"
 DEMO_MODEL_ANTHROPIC = f"{Provider.ANTHROPIC}/claude-haiku-4-5"
 DEMO_MODEL_MISTRAL = f"{Provider.MISTRAL}/mistral-small-latest"
 
-# Synthetic location reported alongside incidents created from this demo proxy.
-INCIDENT_LOCATION_PREFIX = "https://inference-proxy.local/v1/chat/completions"
+# Synthetic location reported alongside incidents created from this demo gateway.
+INCIDENT_LOCATION_PREFIX = "https://ai-gateway.local/v1/chat/completions"
