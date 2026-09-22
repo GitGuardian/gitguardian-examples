@@ -1,7 +1,7 @@
 [project]
-name = "inference-proxy"
+name = "ai-gateway"
 version = "0.1.0"
-description = "FastAPI inference proxy demoing GitGuardian secret scanning on LLM prompts/completions"
+description = "FastAPI AI gateway demoing GitGuardian secret scanning on LLM prompts/completions"
 requires-python = ">=3.14"
 dependencies = [
     "anthropic>=0.120.2",

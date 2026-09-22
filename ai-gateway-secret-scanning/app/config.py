@@ -21,7 +21,7 @@ def load_settings() -> Settings:
         raise RuntimeError(
             "GITGUARDIAN_API_KEY is not set. Create a personal access token "
             "(scope: scan) at https://dashboard.gitguardian.com/api/personal-access-tokens "
-            "and export it before starting the proxy."
+            "and export it before starting the gateway."
         )
 
     openai_api_key = os.environ.get("OPENAI_API_KEY")
