@@ -70,8 +70,9 @@ class GitGuardianClient:
         response = await self._http.get(f"{self._base_url}/v1/health", headers=self._headers)
         if response.status_code != 200:
             raise SecretScanError(
-                f"GitGuardian health check failed ({response.status_code}): "
-                f"{self._error_detail(response)}"
+                f"GitGuardian health check against {self._base_url} failed "
+                f"({response.status_code}): {self._error_detail(response)}. "
+                "If your workspace is on another region or self-hosted, set GITGUARDIAN_API_URL."
             )
 
     async def multiscan(self, documents: list[dict]) -> list[ScanResult]:
