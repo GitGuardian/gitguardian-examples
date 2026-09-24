@@ -9,7 +9,7 @@ A minimal [FastAPI](https://fastapi.tiangolo.com/) AI gateway in front of OpenAI
 
 ## Setup
 
-Requires [`uv`](https://docs.astral.sh/uv/), a GitGuardian personal access token (`scan` scope, plus `scan:create-incidents` if `GITGUARDIAN_SOURCE_UUID` is set, from https://dashboard.gitguardian.com/api/personal-access-tokens), and at least one of `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `MISTRAL_API_KEY`.
+Requires [`uv`](https://docs.astral.sh/uv/), a GitGuardian personal access token (`scan` scope, plus `scan:create-incidents` if `GITGUARDIAN_SOURCE_UUID` is set, created in the dashboard under API > Personal access tokens: [US SaaS](https://dashboard.gitguardian.com/api/personal-access-tokens), [EU SaaS](https://dashboard.eu1.gitguardian.com/api/personal-access-tokens)), and at least one of `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `MISTRAL_API_KEY`.
 
 ```bash
 uv sync

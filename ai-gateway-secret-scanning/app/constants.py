@@ -11,6 +11,8 @@ class Provider(StrEnum):
 
 DEFAULT_GITGUARDIAN_API_URL = "https://api.gitguardian.com"
 
+HTTP_TIMEOUT_SECONDS = 20
+
 # Anthropic's Messages API requires an explicit max_tokens; OpenAI's does not.
 ANTHROPIC_MAX_TOKENS = 1024
 
