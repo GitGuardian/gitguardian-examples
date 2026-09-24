@@ -17,7 +17,7 @@ Both send content to [`/v1/scan/create-incidents`](https://api.gitguardian.com/d
 
 ## Setup
 
-Requires [`uv`](https://docs.astral.sh/uv/) and a GitGuardian personal access token with the `scan:create-incidents` scope, from https://dashboard.gitguardian.com/api/personal-access-tokens.
+Requires [`uv`](https://docs.astral.sh/uv/) and a GitGuardian personal access token with the `scan:create-incidents` scope, created in the dashboard under API > Personal access tokens ([US SaaS](https://dashboard.gitguardian.com/api/personal-access-tokens), [EU SaaS](https://dashboard.eu1.gitguardian.com/api/personal-access-tokens)).
 
 1. In GitGuardian, create a custom source (Integrations > Custom source) and copy its UUID. Issues and pull requests share one source; name it after where the content lives, e.g. `github.com/<org> Issues & PRs`.
 2. Install and configure:

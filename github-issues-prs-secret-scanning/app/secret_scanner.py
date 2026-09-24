@@ -74,9 +74,9 @@ class GitGuardianClient:
     https://api.gitguardian.com/docs#tag/Scan-Methods/operation/scan_create_incidents
     """
 
-    def __init__(self, http_client: httpx.AsyncClient, api_key: str, base_url: str):
+    def __init__(self, http_client: httpx.AsyncClient, api_key: str, api_url: str):
         self._http = http_client
-        self._base_url = base_url.rstrip("/")
+        self._api_url = api_url.rstrip("/")
         self._headers = {"Authorization": f"Token {api_key}", "User-Agent": USER_AGENT}
 
     @staticmethod
@@ -88,11 +88,11 @@ class GitGuardianClient:
 
     async def health_check(self) -> None:
         response = await retry.request(
-            self._http, "GET", f"{self._base_url}/v1/health", headers=self._headers
+            self._http, "GET", f"{self._api_url}/v1/health", headers=self._headers
         )
-        if response.status_code != 200:
+        if response.status_code != httpx.codes.OK:
             raise SecretScanError(
-                f"GitGuardian health check against {self._base_url} failed "
+                f"GitGuardian health check against {self._api_url} failed "
                 f"({response.status_code}): {self._error_detail(response).rstrip('.')}. "
                 "If your workspace is on another region or self-hosted, set GITGUARDIAN_API_URL."
             )
@@ -105,11 +105,11 @@ class GitGuardianClient:
         response = await retry.request(
             self._http,
             "POST",
-            f"{self._base_url}/v1/scan/create-incidents",
+            f"{self._api_url}/v1/scan/create-incidents",
             headers=self._headers,
             json=request.model_dump(mode="json"),
         )
-        if response.status_code != 200:
+        if response.status_code != httpx.codes.OK:
             raise SecretScanError(
                 f"GitGuardian create-incidents error ({response.status_code}): "
                 f"{self._error_detail(response)}"

@@ -163,9 +163,9 @@ class GitHubError(RuntimeError):
 class GitHubClient:
     """Read-only client for the GitHub REST API calls the backfill needs."""
 
-    def __init__(self, http_client: httpx.AsyncClient, token: str, base_url: str):
+    def __init__(self, http_client: httpx.AsyncClient, token: str, api_url: str):
         self._http = http_client
-        self._base_url = base_url.rstrip("/")
+        self._api_url = api_url.rstrip("/")
         self._headers = {
             "Authorization": f"Bearer {token}",
             "Accept": "application/vnd.github+json",
@@ -175,13 +175,13 @@ class GitHubClient:
     async def _paginate[T: Model](
         self, path: str, model: type[T], params: dict | None = None
     ) -> AsyncIterator[T]:
-        url: str | None = f"{self._base_url}{path}"
+        url: str | None = f"{self._api_url}{path}"
         query = {"per_page": GITHUB_PAGE_SIZE, **(params or {})}
         while url:
             response = await retry.request(
                 self._http, "GET", url, headers=self._headers, params=query
             )
-            if response.status_code != 200:
+            if response.status_code != httpx.codes.OK:
                 raise GitHubError(
                     f"GitHub returned {response.status_code} for {url}. Check that GITHUB_TOKEN "
                     "can read this repository's issues and pull requests."

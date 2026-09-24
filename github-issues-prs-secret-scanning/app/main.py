@@ -9,6 +9,7 @@ import uvicorn
 from fastapi import FastAPI, Header, HTTPException, Request
 
 from app.config import ConfigError, WebhookSettings, load_webhook_settings
+from app.constants import HTTP_TIMEOUT_SECONDS
 from app.github import verify_signature, webhook_document
 from app.logs import setup_logging
 from app.models import Model
@@ -25,11 +26,11 @@ gg_client: GitGuardianClient | None = None
 async def lifespan(app: FastAPI):
     global settings, gg_client
     settings = load_webhook_settings()
-    async with httpx.AsyncClient(timeout=20) as http_client:
+    async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS) as http_client:
         gg_client = GitGuardianClient(
             http_client,
             api_key=settings.gitguardian.api_key,
-            base_url=settings.gitguardian.base_url,
+            api_url=settings.gitguardian.api_url,
         )
         yield
 
@@ -69,7 +70,7 @@ async def github_webhook(
     # Read raw rather than as a pydantic body parameter: the signature is over the exact bytes.
     body = await request.body()
     if not verify_signature(current_settings.github_webhook_secret, body, x_hub_signature_256):
-        raise HTTPException(status_code=401, detail="invalid_signature")
+        raise HTTPException(status_code=httpx.codes.UNAUTHORIZED, detail="invalid_signature")
 
     document = webhook_document(x_github_event, body)
     if document is None:
@@ -82,15 +83,15 @@ async def github_webhook(
     except SecretScanError as exc:
         # A non-2xx makes the delivery show as failed in GitHub, so it can be redelivered.
         logger.error("Scan failed", extra={"url": document.location.url, "error": str(exc)})
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+        raise HTTPException(status_code=httpx.codes.BAD_GATEWAY, detail=str(exc)) from exc
 
     return WebhookResponse(status="secret_detected" if findings else "clean", findings=findings)
 
 
 async def _check_gitguardian(settings: WebhookSettings) -> None:
-    async with httpx.AsyncClient(timeout=20) as http_client:
+    async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS) as http_client:
         client = GitGuardianClient(
-            http_client, settings.gitguardian.api_key, settings.gitguardian.base_url
+            http_client, settings.gitguardian.api_key, settings.gitguardian.api_url
         )
         await client.health_check()
 

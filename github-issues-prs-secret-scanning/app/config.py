@@ -7,7 +7,7 @@ from app.constants import DEFAULT_GITGUARDIAN_API_URL, DEFAULT_GITHUB_API_URL
 @dataclass(frozen=True)
 class GitGuardianSettings:
     api_key: str
-    base_url: str
+    api_url: str
     source_uuid: str
 
 
@@ -39,10 +39,10 @@ def _load_gitguardian_settings() -> GitGuardianSettings:
     return GitGuardianSettings(
         api_key=_require(
             "GITGUARDIAN_API_KEY",
-            "Create a personal access token (scope: scan:create-incidents) at "
-            "https://dashboard.gitguardian.com/api/personal-access-tokens.",
+            "Create a personal access token with the scan:create-incidents scope in the "
+            "GitGuardian dashboard, under API > Personal access tokens.",
         ),
-        base_url=os.environ.get("GITGUARDIAN_API_URL", DEFAULT_GITGUARDIAN_API_URL),
+        api_url=os.environ.get("GITGUARDIAN_API_URL", DEFAULT_GITGUARDIAN_API_URL),
         source_uuid=_require(
             "GITGUARDIAN_SOURCE_UUID",
             "Create a custom source (Integrations > Custom source) and use its UUID.",

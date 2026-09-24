@@ -7,7 +7,15 @@ import time
 
 import httpx
 
-from app.constants import BACKOFF_BASE_SECONDS, BACKOFF_MAX_SECONDS, HTTP_MAX_ATTEMPTS
+from app.constants import (
+    BACKOFF_BASE_SECONDS,
+    BACKOFF_MAX_SECONDS,
+    GITHUB_RATELIMIT_REMAINING_HEADER,
+    GITHUB_RATELIMIT_RESET_HEADER,
+    GITHUB_SECONDARY_RATE_LIMIT_WAIT_SECONDS,
+    HTTP_MAX_ATTEMPTS,
+    RETRY_AFTER_HEADER,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,17 +32,22 @@ def _retry_delay(response: httpx.Response, attempt: int) -> float | None:
     https://docs.github.com/en/rest/using-the-rest-api/best-practices-for-using-the-rest-api#handle-rate-limit-errors-appropriately
     """
     headers = response.headers
-    if response.status_code not in (403, 429) and response.status_code < 500:
+    status = response.status_code
+    if status not in (httpx.codes.FORBIDDEN, httpx.codes.TOO_MANY_REQUESTS) and not (
+        httpx.codes.is_server_error(status)
+    ):
         return None
-    if retry_after := headers.get("retry-after"):
+    if retry_after := headers.get(RETRY_AFTER_HEADER):
         return float(retry_after)
-    if headers.get("x-ratelimit-remaining") == "0" and (reset := headers.get("x-ratelimit-reset")):
+    if headers.get(GITHUB_RATELIMIT_REMAINING_HEADER) == "0" and (
+        reset := headers.get(GITHUB_RATELIMIT_RESET_HEADER)
+    ):
         return max(float(reset) - time.time(), 0) + 1
-    if response.status_code == 403:
+    if status == httpx.codes.FORBIDDEN:
         # GitHub's secondary rate limit can come without headers; a plain 403 is a permission error.
         if "rate limit" not in response.text.lower():
             return None
-        return max(60, _backoff(attempt))
+        return max(GITHUB_SECONDARY_RATE_LIMIT_WAIT_SECONDS, _backoff(attempt))
     return _backoff(attempt)
 
 
