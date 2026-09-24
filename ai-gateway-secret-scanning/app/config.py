@@ -20,7 +20,8 @@ def load_settings() -> Settings:
     if not gitguardian_api_key:
         raise RuntimeError(
             "GITGUARDIAN_API_KEY is not set. Create a personal access token "
-            "(scope: scan) at https://dashboard.gitguardian.com/api/personal-access-tokens "
+            "(scope: scan, plus scan:create-incidents if GITGUARDIAN_SOURCE_UUID is set) at "
+            "https://dashboard.gitguardian.com/api/personal-access-tokens "
             "and export it before starting the gateway."
         )
 
