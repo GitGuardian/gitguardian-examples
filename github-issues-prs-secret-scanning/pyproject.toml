@@ -22,13 +22,6 @@ build-backend = "uv_build"
 module-name = "app"
 module-root = ""
 
-# The org-wide default index (GitLab package registry) doesn't mirror public
-# PyPI packages and requires auth this project doesn't need; pull straight
-# from PyPI for this repo's public, open-source dependencies.
-[[tool.uv.index]]
-name = "pypi"
-url = "https://pypi.org/simple"
-default = true
 
 [dependency-groups]
 dev = [

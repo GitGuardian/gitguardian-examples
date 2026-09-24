@@ -12,6 +12,7 @@ from datetime import UTC, datetime
 import httpx
 
 from app.config import ConfigError, load_backfill_settings
+from app.constants import HTTP_TIMEOUT_SECONDS
 from app.github import GitHubClient, GitHubError
 from app.logs import setup_logging
 from app.secret_scanner import Document, GitGuardianClient, SecretScanError, scan_documents
@@ -27,9 +28,9 @@ async def backfill(repo: str, since: str | None) -> tuple[int, int]:
     settings = load_backfill_settings()
     source_uuid = settings.gitguardian.source_uuid
 
-    async with httpx.AsyncClient(timeout=20) as http_client:
+    async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS) as http_client:
         gg_client = GitGuardianClient(
-            http_client, settings.gitguardian.api_key, settings.gitguardian.base_url
+            http_client, settings.gitguardian.api_key, settings.gitguardian.api_url
         )
         github = GitHubClient(http_client, settings.github_token, settings.github_api_url)
         await gg_client.health_check()
