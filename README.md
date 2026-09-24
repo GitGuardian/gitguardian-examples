@@ -10,4 +10,7 @@ This repo is meant to make it easy to find example implementations of GitGuardia
 [GitGuardian Secret Scanning in an AI Gateway
 ](https://github.com/GitGuardian/gitguardian-examples/tree/main/ai-gateway-secret-scanning)
 
+[GitGuardian Secret Scanning of GitHub Issues and Pull Requests
+](https://github.com/GitGuardian/gitguardian-examples/tree/main/github-issues-prs-secret-scanning)
+
 If you have questions about this repo, feel free to email `devrel@gitguardian.com`
