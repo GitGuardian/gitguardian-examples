@@ -35,7 +35,7 @@ def load_settings() -> Settings:
 
     return Settings(
         gitguardian_api_key=gitguardian_api_key,
-        base_url=os.environ.get("GITGUARDIAN_INSTANCE", DEFAULT_GITGUARDIAN_API_URL),
+        base_url=os.environ.get("GITGUARDIAN_API_URL", DEFAULT_GITGUARDIAN_API_URL),
         gitguardian_source_uuid=os.environ.get("GITGUARDIAN_SOURCE_UUID"),
         openai_api_key=openai_api_key,
         anthropic_api_key=anthropic_api_key,
