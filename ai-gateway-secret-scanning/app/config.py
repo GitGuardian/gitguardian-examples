@@ -7,7 +7,7 @@ from app.constants import DEFAULT_GITGUARDIAN_API_URL
 @dataclass(frozen=True)
 class Settings:
     gitguardian_api_key: str
-    base_url: str
+    api_url: str
     gitguardian_source_uuid: str | None
     openai_api_key: str | None
     anthropic_api_key: str | None
@@ -20,9 +20,9 @@ def load_settings() -> Settings:
     if not gitguardian_api_key:
         raise RuntimeError(
             "GITGUARDIAN_API_KEY is not set. Create a personal access token "
-            "(scope: scan, plus scan:create-incidents if GITGUARDIAN_SOURCE_UUID is set) at "
-            "https://dashboard.gitguardian.com/api/personal-access-tokens "
-            "and export it before starting the gateway."
+            "(scope: scan, plus scan:create-incidents if GITGUARDIAN_SOURCE_UUID is set) in the "
+            "GitGuardian dashboard, under API > Personal access tokens, and export it before "
+            "starting the gateway."
         )
 
     openai_api_key = os.environ.get("OPENAI_API_KEY")
@@ -35,7 +35,7 @@ def load_settings() -> Settings:
 
     return Settings(
         gitguardian_api_key=gitguardian_api_key,
-        base_url=os.environ.get("GITGUARDIAN_API_URL", DEFAULT_GITGUARDIAN_API_URL),
+        api_url=os.environ.get("GITGUARDIAN_API_URL", DEFAULT_GITGUARDIAN_API_URL),
         gitguardian_source_uuid=os.environ.get("GITGUARDIAN_SOURCE_UUID"),
         openai_api_key=openai_api_key,
         anthropic_api_key=anthropic_api_key,

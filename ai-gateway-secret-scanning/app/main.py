@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 from app.config import Settings, load_settings
-from app.constants import INCIDENT_LOCATION_PREFIX
+from app.constants import HTTP_TIMEOUT_SECONDS, INCIDENT_LOCATION_PREFIX
 from app.secret_scanner import (
     GitGuardianClient,
     SecretFinding,
@@ -30,11 +30,11 @@ http_client: httpx.AsyncClient | None = None
 async def lifespan(app: FastAPI):
     global settings, gg_client, http_client
     settings = load_settings()
-    http_client = httpx.AsyncClient(timeout=20)
+    http_client = httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS)
     gg_client = GitGuardianClient(
         http_client,
         api_key=settings.gitguardian_api_key,
-        base_url=settings.base_url,
+        api_url=settings.api_url,
     )
     await gg_client.health_check()
     logger.info("GitGuardian API reachable, secret scanning enabled")
@@ -105,13 +105,13 @@ async def chat_completions(payload: ChatRequest):
     try:
         request_findings = await scan_documents(current_gg_client, request_labeled)
     except SecretScanError as exc:
-        return JSONResponse(status_code=502, content={"error": str(exc)})
+        return JSONResponse(status_code=httpx.codes.BAD_GATEWAY, content={"error": str(exc)})
 
     if request_findings:
         logger.warning("Blocked outbound request: %s", request_findings)
         await _create_incidents_if_configured(request_labeled, request_findings)
         return JSONResponse(
-            status_code=400,
+            status_code=httpx.codes.BAD_REQUEST,
             content={
                 "error": "secret_detected_in_request",
                 "message": (
@@ -128,20 +128,21 @@ async def chat_completions(payload: ChatRequest):
         )
     except UpstreamError as exc:
         return JSONResponse(
-            status_code=400, content={"error": "unsupported_model", "message": str(exc)}
+            status_code=httpx.codes.BAD_REQUEST,
+            content={"error": "unsupported_model", "message": str(exc)},
         )
 
     response_labeled = [("response/message[0].assistant", reply_text)]
     try:
         response_findings = await scan_documents(current_gg_client, response_labeled)
     except SecretScanError as exc:
-        return JSONResponse(status_code=502, content={"error": str(exc)})
+        return JSONResponse(status_code=httpx.codes.BAD_GATEWAY, content={"error": str(exc)})
 
     if response_findings:
         logger.warning("Blocked inbound completion: %s", response_findings)
         await _create_incidents_if_configured(response_labeled, response_findings)
         return JSONResponse(
-            status_code=502,
+            status_code=httpx.codes.BAD_GATEWAY,
             content={
                 "error": "secret_detected_in_response",
                 "message": (

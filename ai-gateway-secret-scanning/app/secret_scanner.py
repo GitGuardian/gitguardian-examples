@@ -51,9 +51,9 @@ class GitGuardianClient:
     https://api.gitguardian.com/docs#tag/Scan-Methods/operation/scan_create_incidents
     """
 
-    def __init__(self, http_client: httpx.AsyncClient, api_key: str, base_url: str):
+    def __init__(self, http_client: httpx.AsyncClient, api_key: str, api_url: str):
         self._http = http_client
-        self._base_url = base_url.rstrip("/")
+        self._api_url = api_url.rstrip("/")
         self._headers = {
             "Authorization": f"Token {api_key}",
             "User-Agent": "ai-gateway-demo",
@@ -67,19 +67,19 @@ class GitGuardianClient:
             return response.text
 
     async def health_check(self) -> None:
-        response = await self._http.get(f"{self._base_url}/v1/health", headers=self._headers)
-        if response.status_code != 200:
+        response = await self._http.get(f"{self._api_url}/v1/health", headers=self._headers)
+        if response.status_code != httpx.codes.OK:
             raise SecretScanError(
-                f"GitGuardian health check against {self._base_url} failed "
+                f"GitGuardian health check against {self._api_url} failed "
                 f"({response.status_code}): {self._error_detail(response)}. "
                 "If your workspace is on another region or self-hosted, set GITGUARDIAN_API_URL."
             )
 
     async def multiscan(self, documents: list[dict]) -> list[ScanResult]:
         response = await self._http.post(
-            f"{self._base_url}/v1/multiscan", headers=self._headers, json=documents
+            f"{self._api_url}/v1/multiscan", headers=self._headers, json=documents
         )
-        if response.status_code != 200:
+        if response.status_code != httpx.codes.OK:
             raise SecretScanError(
                 f"GitGuardian multiscan error ({response.status_code}): "
                 f"{self._error_detail(response)}"
@@ -89,11 +89,11 @@ class GitGuardianClient:
     async def create_incidents(self, documents: list[dict], source_uuid: str) -> list[ScanResult]:
         payload = {"source_uuid": source_uuid, "documents": documents}
         response = await self._http.post(
-            f"{self._base_url}/v1/scan/create-incidents",
+            f"{self._api_url}/v1/scan/create-incidents",
             headers=self._headers,
             json=payload,
         )
-        if response.status_code != 200:
+        if response.status_code != httpx.codes.OK:
             raise SecretScanError(
                 f"GitGuardian create-incidents error ({response.status_code}): "
                 f"{self._error_detail(response)}"
