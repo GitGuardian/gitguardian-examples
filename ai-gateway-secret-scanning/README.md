@@ -16,7 +16,7 @@ uv sync
 cp .env.example .env
 ```
 
-Edit `.env`: set `GITGUARDIAN_API_KEY` and whichever provider key(s) you have. `GITGUARDIAN_INSTANCE` and `GITGUARDIAN_SOURCE_UUID` are optional (see `.env.example`). All env vars are parsed and validated in one place, `app/config.py`'s `load_settings()`, which fails fast at startup if something's missing.
+Edit `.env`: set `GITGUARDIAN_API_KEY` and whichever provider key(s) you have. `GITGUARDIAN_API_URL` and `GITGUARDIAN_SOURCE_UUID` are optional (see `.env.example`). All env vars are parsed and validated in one place, `app/config.py`'s `load_settings()`, which fails fast at startup if something's missing.
 
 ```bash
 uv run --env-file .env uvicorn app.main:app --reload
