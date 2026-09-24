@@ -1,16 +1,42 @@
 # GitGuardian Examples
 
-This repo is meant to make it easy to find example implementations of GitGuardian tools, laid out in a subfolder structure.  Cloning the repository will allow you access to all the examples.  Each example will have its own README in the folder to explain the example further. 
+Practical examples and reference implementations for integrating GitGuardian into developer and security workflows.
 
-## Included example projects
+This repository contains standalone projects demonstrating how to use GitGuardian APIs, secret detection capabilities, and other GitGuardian tooling in real-world scenarios.
 
-[GitGuardian API Remediation Workflow Notebook
-](https://github.com/GitGuardian/gitguardian-examples/tree/main/api-remediation-notebook)
+Each example lives in its own directory with setup instructions, requirements, and documentation.
 
-[GitGuardian Secret Scanning in an AI Gateway
-](https://github.com/GitGuardian/gitguardian-examples/tree/main/ai-gateway-secret-scanning)
+## Examples
 
-[GitGuardian Secret Scanning of GitHub Issues and Pull Requests
-](https://github.com/GitGuardian/gitguardian-examples/tree/main/github-issues-prs-secret-scanning)
+### GitGuardian API Remediation Workflow Notebook
 
-If you have questions about this repo, feel free to email `devrel@gitguardian.com`
+A notebook demonstrating how to use the GitGuardian API as part of a secrets remediation workflow.
+
+[View the example](./api-remediation-notebook)
+
+### Secret Scanning in an AI Gateway
+
+An AI gateway in front of OpenAI, Anthropic, and Mistral that scans every prompt and completion with GitGuardian and blocks the call if a secret is found.
+
+[View the example](./ai-gateway-secret-scanning)
+
+### Secret Scanning of GitHub Issues and Pull Requests
+
+A webhook receiver and a backfill command that scan GitHub issues, pull requests, comments, and reviews, and raise the secrets they find as incidents on a GitGuardian custom source.
+
+[View the example](./github-issues-prs-secret-scanning)
+
+## Getting started
+
+Clone the repository and navigate to the example you want to explore:
+
+```bash
+git clone https://github.com/GitGuardian/gitguardian-examples.git
+cd gitguardian-examples
+```
+
+Follow the README in each example directory for installation and usage instructions.
+
+## Questions
+
+For questions or feedback about these examples, contact `devrel@gitguardian.com`.
