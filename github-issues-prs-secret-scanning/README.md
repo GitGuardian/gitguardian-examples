@@ -56,7 +56,7 @@ Try it by commenting on an issue with GitGuardian's test token, which is always 
 gh issue comment <number> --repo <owner>/<repo> --body "token: ggtt-v-12345azert"
 ```
 
-The server logs a `Secret detected` line and a GitGuardian incident appears on the custom source, linking to the comment. The webhook response (visible in the webhook's "Recent Deliveries" on GitHub) is `{"status": "secret_detected", "findings": [...]}`, `{"status": "clean"}`, or `{"status": "ignored"}` for events that aren't scanned. Deliveries with an invalid signature get a `401`. If GitGuardian can't be reached the delivery fails with a `502` so it can be redelivered from GitHub.
+The server logs a `Secret detected` line and a GitGuardian incident appears on the custom source, linking to the comment. The webhook response (visible in the webhook's "Recent Deliveries" on GitHub) is `{"status": "secret_detected", "findings": [...]}`, `{"status": "clean"}`, or `{"status": "ignored"}` for events that aren't scanned. Deliveries with an invalid signature get a `401`, and signed deliveries with a malformed payload a `400`. If GitGuardian can't be reached the delivery fails with a `502` so it can be redelivered from GitHub.
 
 ## Backfill
 
@@ -75,10 +75,11 @@ docker build -t github-issues-prs-secret-scanning .
 docker run --env-file .env -p 8000:8000 github-issues-prs-secret-scanning
 ```
 
-The same image runs the backfill:
+The same image runs the backfill, either in a one-off container or inside the running service, which reuses its configuration:
 
 ```bash
 docker run --env-file .env github-issues-prs-secret-scanning backfill <owner>/<repo>
+docker exec <container> backfill <owner>/<repo>
 ```
 
 `docker --env-file` keeps quotes as part of the value, so leave the values in `.env` unquoted. GitHub still needs a public HTTPS URL, so put the container behind your ingress or reverse proxy.
