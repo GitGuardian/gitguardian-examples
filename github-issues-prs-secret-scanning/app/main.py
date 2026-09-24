@@ -7,6 +7,7 @@ from typing import Literal
 import httpx
 import uvicorn
 from fastapi import FastAPI, Header, HTTPException, Request
+from pydantic import ValidationError
 
 from app.config import ConfigError, WebhookSettings, load_webhook_settings
 from app.constants import HTTP_TIMEOUT_SECONDS
@@ -35,7 +36,13 @@ async def lifespan(app: FastAPI):
         yield
 
 
-app = FastAPI(title="GitHub Issues & PRs - GitGuardian secret-scanning demo", lifespan=lifespan)
+app = FastAPI(
+    title="GitHub Issues & PRs - GitGuardian secret-scanning demo",
+    lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+)
 
 
 def _get_settings() -> WebhookSettings:
@@ -72,7 +79,13 @@ async def github_webhook(
     if not verify_signature(current_settings.github_webhook_secret, body, x_hub_signature_256):
         raise HTTPException(status_code=httpx.codes.UNAUTHORIZED, detail="invalid_signature")
 
-    document = webhook_document(x_github_event, body)
+    try:
+        document = webhook_document(x_github_event, body)
+    except ValidationError as exc:
+        logger.warning(
+            "Invalid webhook payload", extra={"event": x_github_event, "error": str(exc)}
+        )
+        raise HTTPException(status_code=httpx.codes.BAD_REQUEST, detail="invalid_payload") from exc
     if document is None:
         return WebhookResponse(status="ignored")
 
