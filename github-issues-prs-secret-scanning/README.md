@@ -66,6 +66,23 @@ uv run --env-file .env backfill <owner>/<repo>
 
 `GITHUB_TOKEN` needs read access to the repository's issues and pull requests. Pass `--since 2026-01-01T00:00:00Z` to only scan content updated after a date. The command exits with `1` if it found any secret, and `2` if a setting is missing or GitHub or GitGuardian returned an error. A fine-grained token limited to public repositories gets a `404` on private ones. Reviews are fetched per pull request, so backfilling a repository with many pull requests takes one extra GitHub API call for each; GitHub allows 5,000 per hour per user.
 
+## Docker
+
+The `Dockerfile` is a starting point for running the receiver on your own infrastructure:
+
+```bash
+docker build -t github-issues-prs-secret-scanning .
+docker run --env-file .env -p 8000:8000 github-issues-prs-secret-scanning
+```
+
+The same image runs the backfill:
+
+```bash
+docker run --env-file .env github-issues-prs-secret-scanning backfill <owner>/<repo>
+```
+
+`docker --env-file` keeps quotes as part of the value, so leave the values in `.env` unquoted. GitHub still needs a public HTTPS URL, so put the container behind your ingress or reverse proxy.
+
 ## Lint and type-check
 
 ```bash
