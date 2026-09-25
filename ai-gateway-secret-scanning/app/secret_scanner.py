@@ -44,6 +44,15 @@ class SecretFinding:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class Author:
+    name: str | None
+    email: str | None
+
+    def fields(self) -> dict:
+        return {k: v for k, v in {"author_name": self.name, "author_info": self.email}.items() if v}
+
+
 class GitGuardianClient:
     """Thin wrapper around the GitGuardian REST API (no pygitguardian dependency).
 
@@ -143,6 +152,7 @@ async def create_incidents_for_findings(
     findings: list[SecretFinding],
     source_uuid: str,
     location_prefix: str,
+    author: Author,
 ) -> None:
     """Create real GitGuardian incidents for the documents that had findings.
 
@@ -154,6 +164,7 @@ async def create_incidents_for_findings(
             "document": content,
             "filename": f"{label}.txt",
             "location": {"url": f"{location_prefix}#{label}"},
+            **author.fields(),
         }
         for label, content in labeled_contents
         if label in flagged_labels

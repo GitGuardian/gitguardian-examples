@@ -2,13 +2,14 @@ import logging
 from contextlib import asynccontextmanager
 
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, Header
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 from app.config import Settings, load_settings
 from app.constants import HTTP_TIMEOUT_SECONDS, INCIDENT_LOCATION_PREFIX
 from app.secret_scanner import (
+    Author,
     GitGuardianClient,
     SecretFinding,
     SecretScanError,
@@ -79,14 +80,19 @@ def healthz():
 
 
 async def _create_incidents_if_configured(
-    labeled_contents: list[tuple[str, str]], findings: list[SecretFinding]
+    labeled_contents: list[tuple[str, str]], findings: list[SecretFinding], author: Author
 ) -> None:
     source_uuid = _get_settings().gitguardian_source_uuid
     if not source_uuid:
         return
     try:
         await create_incidents_for_findings(
-            _get_gg_client(), labeled_contents, findings, source_uuid, INCIDENT_LOCATION_PREFIX
+            _get_gg_client(),
+            labeled_contents,
+            findings,
+            source_uuid,
+            INCIDENT_LOCATION_PREFIX,
+            author,
         )
         logger.info("Created GitGuardian incident(s) for %d finding(s)", len(findings))
     except SecretScanError as exc:
@@ -94,7 +100,13 @@ async def _create_incidents_if_configured(
 
 
 @app.post("/v1/chat/completions")
-async def chat_completions(payload: ChatRequest):
+async def chat_completions(
+    payload: ChatRequest,
+    # Set by an authenticating reverse proxy in front of the gateway, e.g. oauth2-proxy.
+    x_forwarded_user: str | None = Header(default=None),
+    x_forwarded_email: str | None = Header(default=None),
+):
+    author = Author(name=x_forwarded_user, email=x_forwarded_email)
     current_settings = _get_settings()
     current_gg_client = _get_gg_client()
 
@@ -109,7 +121,7 @@ async def chat_completions(payload: ChatRequest):
 
     if request_findings:
         logger.warning("Blocked outbound request: %s", request_findings)
-        await _create_incidents_if_configured(request_labeled, request_findings)
+        await _create_incidents_if_configured(request_labeled, request_findings, author)
         return JSONResponse(
             status_code=httpx.codes.BAD_REQUEST,
             content={
@@ -140,7 +152,7 @@ async def chat_completions(payload: ChatRequest):
 
     if response_findings:
         logger.warning("Blocked inbound completion: %s", response_findings)
-        await _create_incidents_if_configured(response_labeled, response_findings)
+        await _create_incidents_if_configured(response_labeled, response_findings, author)
         return JSONResponse(
             status_code=httpx.codes.BAD_GATEWAY,
             content={

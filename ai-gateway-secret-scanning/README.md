@@ -99,4 +99,4 @@ uv run ty check .
 ## Notes
 
 - `/multiscan` takes ~20 documents per call by default - fine for one chat turn per request.
-- `/scan/create-incidents` needs a `source_uuid` (a GitGuardian custom source). Incident creation is best-effort and never overrides the fail-closed block if it fails.
+- `/scan/create-incidents` needs a `source_uuid` (a GitGuardian custom source). Incident creation is best-effort and never overrides the fail-closed block if it fails. Put the gateway behind an authenticating proxy that sets `X-Forwarded-User` and `X-Forwarded-Email` (e.g. oauth2-proxy) and incidents record who sent the request.
