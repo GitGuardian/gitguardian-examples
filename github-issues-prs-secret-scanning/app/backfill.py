@@ -50,7 +50,7 @@ async def backfill(repo: str, since: str | None) -> tuple[int, int]:
             )
 
         async for document in github.repository_documents(repo, since):
-            chunk.append(document)
+            chunk.append(await github.with_author_email(document))
             if len(chunk) >= CHUNK_SIZE:
                 await flush()
         if chunk:

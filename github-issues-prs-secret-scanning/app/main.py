@@ -11,7 +11,7 @@ from pydantic import ValidationError
 
 from app.config import ConfigError, WebhookSettings, load_webhook_settings
 from app.constants import HTTP_TIMEOUT_SECONDS
-from app.github import verify_signature, webhook_document
+from app.github import GitHubClient, verify_signature, webhook_document
 from app.logs import setup_logging
 from app.models import Model
 from app.secret_scanner import GitGuardianClient, SecretFinding, SecretScanError, scan_documents
@@ -21,11 +21,12 @@ logger = logging.getLogger("github_webhook")
 
 settings: WebhookSettings | None = None
 gg_client: GitGuardianClient | None = None
+github_client: GitHubClient | None = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global settings, gg_client
+    global settings, gg_client, github_client
     settings = load_webhook_settings()
     async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS) as http_client:
         gg_client = GitGuardianClient(
@@ -33,6 +34,10 @@ async def lifespan(app: FastAPI):
             api_key=settings.gitguardian.api_key,
             api_url=settings.gitguardian.api_url,
         )
+        if settings.github_token:
+            github_client = GitHubClient(
+                http_client, settings.github_token, settings.github_api_url
+            )
         yield
 
 
@@ -88,6 +93,8 @@ async def github_webhook(
         raise HTTPException(status_code=httpx.codes.BAD_REQUEST, detail="invalid_payload") from exc
     if document is None:
         return WebhookResponse(status="ignored")
+    if github_client is not None:
+        document = await github_client.with_author_email(document)
 
     try:
         findings = await scan_documents(

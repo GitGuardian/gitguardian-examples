@@ -5,7 +5,7 @@ GitGuardian's GitHub integration scans code, not the conversations around it. Th
 - **`webhook`** (`app/main.py`): a [FastAPI](https://fastapi.tiangolo.com/) endpoint for GitHub webhooks that scans content as soon as it is created or edited.
 - **`backfill`** (`app/backfill.py`): a command that scans what a repository already has.
 
-Both send content to [`/v1/scan/create-incidents`](https://api.gitguardian.com/docs#tag/Scan-Methods/operation/scan_create_incidents), which scans it and raises an incident for every secret in one call. Each occurrence links back to the exact issue, pull request, comment or review. Request and response bodies, GitHub's included, are parsed with pydantic models.
+Both send content to [`/v1/scan/create-incidents`](https://api.gitguardian.com/docs#tag/Scan-Methods/operation/scan_create_incidents), which scans it and raises an incident for every secret in one call. Each occurrence links back to the exact issue, pull request, comment or review, and names its GitHub author, with their email when it is public on their profile. Request and response bodies, GitHub's included, are parsed with pydantic models.
 
 | GitHub content | Webhook event (actions) |
 | --- | --- |
@@ -27,7 +27,7 @@ uv sync
 cp .env.example .env
 ```
 
-Edit `.env`: set `GITGUARDIAN_API_KEY`, `GITGUARDIAN_SOURCE_UUID`, and `GITHUB_WEBHOOK_SECRET` and/or `GITHUB_TOKEN` depending on what you run. All env vars are validated in `app/config.py`.
+Edit `.env`: set `GITGUARDIAN_API_KEY`, `GITGUARDIAN_SOURCE_UUID`, and `GITHUB_WEBHOOK_SECRET` and/or `GITHUB_TOKEN` depending on what you run. `GITHUB_TOKEN` is optional for the webhook receiver: without it, incidents don't carry the author's email. All env vars are validated in `app/config.py`.
 
 ## Webhook receiver
 
@@ -64,7 +64,7 @@ The server logs a `Secret detected` line and a GitGuardian incident appears on t
 uv run --env-file .env backfill <owner>/<repo>
 ```
 
-`GITHUB_TOKEN` needs read access to the repository's issues and pull requests. Pass `--since 2026-01-01T00:00:00Z` to only scan content updated after a date. The command exits with `1` if it found any secret, and `2` if a setting is missing or GitHub or GitGuardian returned an error. A fine-grained token limited to public repositories gets a `404` on private ones. Reviews are fetched per pull request, so backfilling a repository with many pull requests takes one extra GitHub API call for each; GitHub allows 5,000 per hour per user.
+`GITHUB_TOKEN` needs read access to the repository's issues and pull requests. Pass `--since 2026-01-01T00:00:00Z` to only scan content updated after a date. The command exits with `1` if it found any secret, and `2` if a setting is missing or GitHub or GitGuardian returned an error. A fine-grained token limited to public repositories gets a `404` on private ones. Reviews are fetched per pull request, so backfilling a repository with many pull requests takes one extra GitHub API call for each, plus one per distinct author to look up their email; GitHub allows 5,000 per hour per user.
 
 ## Docker
 
@@ -99,4 +99,4 @@ uv run ty check .
 - GitGuardian keeps one occurrence per secret and document `filename`, so rerunning the backfill, redelivering a webhook or rescanning an edited comment doesn't add duplicate occurrences.
 - `/scan/create-incidents` is in beta. Each document's `filename` identifies the GitHub object it came from, e.g. `<owner>/<repo>/issues/comments/<id>`.
 - The scan only sees the latest version of an edited comment. The secret stays in GitHub's edit history, so rotate it rather than just editing it out.
-- GitHub Enterprise Server works by setting `GITHUB_API_URL` for the backfill; the webhook receiver is host-agnostic.
+- GitHub Enterprise Server works by setting `GITHUB_API_URL`.

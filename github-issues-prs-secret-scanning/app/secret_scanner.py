@@ -25,6 +25,8 @@ class Document(Model):
     filename: str
     document: str
     location: DocumentLocation
+    author_name: str | None = None
+    author_info: str | None = None
 
 
 class CreateIncidentsRequest(Model):
@@ -107,7 +109,7 @@ class GitGuardianClient:
             "POST",
             f"{self._api_url}/v1/scan/create-incidents",
             headers=self._headers,
-            json=request.model_dump(mode="json"),
+            json=request.model_dump(mode="json", exclude_none=True),
         )
         if response.status_code != httpx.codes.OK:
             raise SecretScanError(

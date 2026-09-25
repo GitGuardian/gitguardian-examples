@@ -15,6 +15,9 @@ class GitGuardianSettings:
 class WebhookSettings:
     gitguardian: GitGuardianSettings
     github_webhook_secret: str
+    # Optional: without it, incidents don't carry the author's email.
+    github_token: str | None
+    github_api_url: str
 
 
 @dataclass(frozen=True)
@@ -58,6 +61,8 @@ def load_webhook_settings() -> WebhookSettings:
             "GITHUB_WEBHOOK_SECRET",
             "Use the same value as the secret configured on the GitHub webhook.",
         ),
+        github_token=os.environ.get("GITHUB_TOKEN") or None,
+        github_api_url=os.environ.get("GITHUB_API_URL", DEFAULT_GITHUB_API_URL),
     )
 
 
