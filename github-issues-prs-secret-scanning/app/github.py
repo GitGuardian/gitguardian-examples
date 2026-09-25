@@ -6,6 +6,7 @@ models serve both the webhook receiver and the backfill command.
 
 import hashlib
 import hmac
+import logging
 from collections.abc import AsyncIterator
 
 import httpx
@@ -15,9 +16,25 @@ from app.constants import GITHUB_PAGE_SIZE, USER_AGENT
 from app.models import Model
 from app.secret_scanner import Document, DocumentLocation
 
+logger = logging.getLogger(__name__)
 
-def _document(filename: str, content: str, url: str) -> Document:
-    return Document(filename=filename, document=content, location=DocumentLocation(url=url))
+
+class User(Model):
+    login: str
+
+
+class UserProfile(Model):
+    # Only set when the user made their email public.
+    email: str | None = None
+
+
+def _document(filename: str, content: str, url: str, author: User | None) -> Document:
+    return Document(
+        filename=filename,
+        document=content,
+        location=DocumentLocation(url=url),
+        author_name=author.login if author else None,
+    )
 
 
 class Issue(Model):
@@ -27,13 +44,17 @@ class Issue(Model):
     title: str
     body: str | None = None
     html_url: str
+    user: User | None = None
     # Only set when the issue is a pull request.
     pull_request: dict | None = None
 
     def document(self, repo: str) -> Document:
         kind = "pull" if self.pull_request is not None else "issues"
         return _document(
-            f"{repo}/{kind}/{self.number}", f"{self.title}\n\n{self.body or ''}", self.html_url
+            f"{repo}/{kind}/{self.number}",
+            f"{self.title}\n\n{self.body or ''}",
+            self.html_url,
+            self.user,
         )
 
 
@@ -42,10 +63,14 @@ class PullRequest(Model):
     title: str
     body: str | None = None
     html_url: str
+    user: User | None = None
 
     def document(self, repo: str) -> Document:
         return _document(
-            f"{repo}/pull/{self.number}", f"{self.title}\n\n{self.body or ''}", self.html_url
+            f"{repo}/pull/{self.number}",
+            f"{self.title}\n\n{self.body or ''}",
+            self.html_url,
+            self.user,
         )
 
 
@@ -55,23 +80,30 @@ class IssueComment(Model):
     id: int
     body: str | None = None
     html_url: str
+    user: User | None = None
 
     def document(self, repo: str) -> Document:
-        return _document(f"{repo}/issues/comments/{self.id}", self.body or "", self.html_url)
+        return _document(
+            f"{repo}/issues/comments/{self.id}", self.body or "", self.html_url, self.user
+        )
 
 
 class ReviewComment(IssueComment):
     """An inline comment left on a pull request's diff."""
 
     def document(self, repo: str) -> Document:
-        return _document(f"{repo}/pulls/comments/{self.id}", self.body or "", self.html_url)
+        return _document(
+            f"{repo}/pulls/comments/{self.id}", self.body or "", self.html_url, self.user
+        )
 
 
 class Review(IssueComment):
     """The top-level body of a pull request review."""
 
     def document(self, repo: str) -> Document:
-        return _document(f"{repo}/pulls/reviews/{self.id}", self.body or "", self.html_url)
+        return _document(
+            f"{repo}/pulls/reviews/{self.id}", self.body or "", self.html_url, self.user
+        )
 
 
 class Repository(Model):
@@ -161,7 +193,7 @@ class GitHubError(RuntimeError):
 
 
 class GitHubClient:
-    """Read-only client for the GitHub REST API calls the backfill needs."""
+    """Read-only client for the GitHub REST API calls the backfill and webhook need."""
 
     def __init__(self, http_client: httpx.AsyncClient, token: str, api_url: str):
         self._http = http_client
@@ -171,6 +203,7 @@ class GitHubClient:
             "Accept": "application/vnd.github+json",
             "User-Agent": USER_AGENT,
         }
+        self._emails: dict[str, str | None] = {}
 
     async def _paginate[T: Model](
         self, path: str, model: type[T], params: dict | None = None
@@ -191,6 +224,28 @@ class GitHubClient:
             # The "next" link already carries every query parameter.
             url = response.links.get("next", {}).get("url")
             query = None
+
+    async def _public_email(self, login: str) -> str | None:
+        if login not in self._emails:
+            url = f"{self._api_url}/users/{login}"
+            response = await retry.request(self._http, "GET", url, headers=self._headers)
+            if response.status_code != httpx.codes.OK:
+                logger.warning(
+                    "Author email lookup failed",
+                    extra={"login": login, "status_code": response.status_code},
+                )
+                return None
+            email = UserProfile.model_validate_json(response.content).email
+            is_noreply = email is not None and "noreply" in email.rpartition("@")[2]
+            self._emails[login] = None if is_noreply else email
+        return self._emails[login]
+
+    async def with_author_email(self, document: Document) -> Document:
+        """The document with its author's public email as author_info, when they have one."""
+        if document.author_name is None:
+            return document
+        email = await self._public_email(document.author_name)
+        return document.model_copy(update={"author_info": email}) if email else document
 
     async def repository_documents(
         self, repo: str, since: str | None = None
